@@ -1,0 +1,12 @@
+{
+  "git.ignoredRepositories": [
+    "or1kToolchain"
+  ],
+  "git.detectSubmodules": false,
+  "files.watcherExclude": {
+    "**/or1kToolchain/**": true
+  },
+  "search.exclude": {
+    "**/or1kToolchain": true
+  }
+}
