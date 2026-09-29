@@ -10,16 +10,16 @@ const int SCREEN_WIDTH = 512;   //!< screen width
 const int SCREEN_HEIGHT = 512;  //!< screen height
 
 // Constants describing the initial view port on the fractal function
-const float FRAC_WIDTH = 3.0; //!< default fractal width (3.0 in Q4.28)
-const float CX_0 = -2.0;      //!< default start x-coordinate (-2.0 in Q4.28)
-const float CY_0 = -1.5;      //!< default start y-coordinate (-1.5 in Q4.28)
+const q6_26 FRAC_WIDTH = 0x0C000000; //Width of the fractal (3.0 in Q6.26)
+const q6_26 CX_0 = 0xF8000000;      //Start x-coordinate (-2.0 in Q6.26)
+const q6_26 CY_0 = 0xFA000000;      //Start y-coordinate (-1.5 in Q6.26)
 const uint16_t N_MAX = 64;    //!< maximum number of iterations
 
 int main() {
    volatile unsigned int *vga = (unsigned int *) 0x50000020;
    volatile unsigned int reg, hi;
    rgb565 frameBuffer[SCREEN_WIDTH*SCREEN_HEIGHT];
-   float delta = FRAC_WIDTH / SCREEN_WIDTH;
+   q6_26 delta = FRAC_WIDTH >> 9; // 512 pixels in width, so 9 bits to shift
    int i;
    vga_clear();
    printf("Starting drawing a fractal\n");
