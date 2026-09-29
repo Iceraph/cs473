@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include "flpt.h"
+#include "perf.h"
 
 // Constants describing the output device
 const int SCREEN_WIDTH = 512;   //!< screen width
@@ -22,9 +23,17 @@ int main() {
    rgb565 frameBuffer[SCREEN_WIDTH*SCREEN_HEIGHT];
    //float delta = FRAC_WIDTH / SCREEN_WIDTH;
    flpt_t delta = 0x25000000;
+   printf("delta = %x\n", delta);
    int i;
    vga_clear();
+   perf_init();
    printf("Starting drawing a fractal\n");
+   // Perf settings
+   perf_set_mask(PERF_COUNTER_0, PERF_EXECUTED_INSTRUCTIONS_MASK);
+   perf_set_mask(PERF_COUNTER_1, PERF_STALL_CYCLES_MASK);
+   perf_set_mask(PERF_COUNTER_2, PERF_BRANCH_PENALTY_MASK);
+   perf_set_mask(PERF_COUNTER_3, PERF_DCACHE_MISS_MASK);
+   perf_start();
 #ifdef __OR1300__   
    /* enable the caches */
    icache_write_cfg( CACHE_DIRECT_MAPPED | CACHE_SIZE_8K | CACHE_REPLACE_FIFO );
@@ -39,10 +48,18 @@ int main() {
    vga[3] = swap_u32((unsigned int)&frameBuffer[0]);
    /* Clear screen */
    for (i = 0 ; i < SCREEN_WIDTH*SCREEN_HEIGHT ; i++) frameBuffer[i]=0;
-
+   printf("Cleared framebuffer\n");
+   /* Draw the fractal */
    draw_fractal(frameBuffer,SCREEN_WIDTH,SCREEN_HEIGHT,&calc_mandelbrot_point_soft, &iter_to_colour,CX_0,CY_0,delta,N_MAX);
 #ifdef __OR1300__
    dcache_flush();
 #endif
+   perf_stop();
+   perf_print_cycles(PERF_COUNTER_RUNTIME, "Fractal"); 
+   perf_print_time(PERF_COUNTER_RUNTIME, "Fractal");
+   perf_print_cycles(PERF_COUNTER_0, "Instructions");
+   perf_print_cycles(PERF_COUNTER_1, "Stall cycles");
+   perf_print_cycles(PERF_COUNTER_2, "Branch penalty");
+   perf_print_cycles(PERF_COUNTER_3, "D-cache misses");
    printf("Done\n");
 }
