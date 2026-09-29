@@ -9,6 +9,9 @@ typedef uint16_t rgb565;
 //! \brief Pointer to fractal point calculation function
 typedef uint16_t (*calc_frac_point_p)(float cx, float cy, uint16_t n_max);
 
+//! Fixed point 
+typedef uint16_t fixed16_t;
+
 uint16_t calc_mandelbrot_point_soft(float cx, float cy, uint16_t n_max);
 
 //! Pointer to function mapping iteration to colour value
