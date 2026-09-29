@@ -16,12 +16,12 @@ uint16_t calc_mandelbrot_point_soft(q6_26 cx, q6_26 cy, uint16_t n_max) {
   do {
     xx = (q12_52)x*x;
     yy = (q12_52)y*y;
-    two_xy = (2 * x * y) >> 26;  //Don't need to put in 64 bits, since we will shift down to 26 bits anyway
+    two_xy = ((q12_52)2 * x * y) >> 26;  //Don't need to put in 64 bits, since we will shift down to 26 bits anyway
 
     x = ((xx - yy) >> 26) + cx;
     y = two_xy + cy;
     ++n;
-  } while (((xx + yy) >> 26) < 0x10000000 && (n < n_max));
+  } while (((xx + yy) >> 26) < 0x10000000 && (n < n_max));   //compare to 4.0 in Q6.26, which is 0x10000000
   return n;
 }
 

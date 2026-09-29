@@ -20,6 +20,7 @@ int main() {
    volatile unsigned int reg, hi;
    rgb565 frameBuffer[SCREEN_WIDTH*SCREEN_HEIGHT];
    q6_26 delta = FRAC_WIDTH >> 9; // 512 pixels in width, so 9 bits to shift
+   printf("delta = 0x%08X\n", delta);
    int i;
    vga_clear();
    printf("Starting drawing a fractal\n");
