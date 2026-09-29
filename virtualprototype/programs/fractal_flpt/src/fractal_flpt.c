@@ -1,5 +1,6 @@
 #include "fractal_flpt.h"
 #include <swap.h>
+#include <stdio.h>
 
 #define FOUR ((flpt_t)0x38000000)
 
