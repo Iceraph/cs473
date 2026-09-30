@@ -1,6 +1,8 @@
 #include "fractal_fxpt.h"
 #include <swap.h>
 
+#define SHIFT_26 26
+
 //! \brief  Mandelbrot fractal point calculation function
 //! \param  cx    x-coordinate
 //! \param  cy    y-coordinate
@@ -16,12 +18,12 @@ uint16_t calc_mandelbrot_point_soft(q6_26 cx, q6_26 cy, uint16_t n_max) {
   do {
     xx = (q12_52)x*x;
     yy = (q12_52)y*y;
-    two_xy = ((q12_52)2 * x * y) >> 26; 
+    two_xy = ((q12_52)2 * x * y) >> SHIFT_26; 
 
-    x = ((xx - yy) >> 26) + cx;
+    x = ((xx - yy) >> SHIFT_26) + cx;
     y = two_xy + cy;
     ++n;
-  } while (((xx + yy) >> 26) < 0x10000000 && (n < n_max));   //compare to 4.0 in Q6.26
+  } while (((xx + yy) >> SHIFT_26) < 0x10000000 && (n < n_max));   //compare to 4.0 in Q6.26
   return n;
 }
 
