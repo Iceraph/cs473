@@ -6,6 +6,7 @@
 // Dynamic masks depending on the number of bits for exponent, sign and mantisse
 #define EXPONENT_MASK ((0xFFFFFFFF << (FLPT_MANTISSE + FLPT_SIGN)) >> FLPT_SIGN)
 #define MANTISSE_MASK (0xFFFFFFFF >> (FLPT_SIGN + FLPT_EXPONENT))
+#define NEG_MANTISSE_MASK (~MANTISSE_MASK)
 #define MANTISSE_OVERFLOW_MASK (1u << (FLPT_MANTISSE + 1)) // Overflow bit with hidden bit
 #define MANTISSE_HIDDEN_BIT_MASK (1u << FLPT_MANTISSE) // Number is 1.mantisse
 #define MANTISSE_LOW_MASK (0xFFFFFFFF >> 16) // Low 16 bits of mantisse
@@ -33,81 +34,74 @@ static inline flpt_t flpt_double (const flpt_t a) {
     return (a + (MANTISSE_HIDDEN_BIT_MASK)); // exp + 1);
 }
 
-static inline flpt_t flpt_sub (const flpt_t a, const flpt_t b) {
-    // Subtracting b is the same as adding -b
-    // Could be optimized to avoid the xor operation, but this is more readable
-    return flpt_add(a, (b ^SIGN_MASK));
-}
-
 //! \brief Add two flpt point numbers
 //! Handles the different cases and redirects to the appropriate function for addition
 static inline flpt_t flpt_add(const flpt_t a, const flpt_t b) {
-    uint32_t unsigned_a = a & NEG_SIGN_MASK;
-    uint32_t unsigned_b = b & NEG_SIGN_MASK;
-
-    if ((a ^ b) & SIGN_MASK) { // Different signs, subtract the numbers
-        if (unsigned_a > unsigned_b) {
-            if (unsigned_b == 0) return a;
-            return flpt_sub_raw(a, b);
-        } if (unsigned_a < unsigned_b) {
-            if (unsigned_a == 0) return b;
-            return flpt_sub_raw(b, a);
-        }
-    } else { // Same signs,  add the numbers
-        if (unsigned_a > unsigned_b) {
-            if (unsigned_b == 0) return a;
-            return flpt_add_raw(a, b);
-        } if (unsigned_a < unsigned_b) {
-            if (unsigned_a == 0) return b;
-            return flpt_add_raw(b, a);
-        }
-
+    uint32_t mag_a = a & NEG_SIGN_MASK; 
+    uint32_t mag_b = b & NEG_SIGN_MASK;
+    int swap   = mag_a < mag_b;
+    flpt_t high  = swap ? b : a;
+    flpt_t low  = swap ? a : b;
+    uint32_t mag_h = high & NEG_SIGN_MASK;  // recompute magnitudes instead of swapping
+    uint32_t mag_l = low & NEG_SIGN_MASK;
+    if (mag_l == 0) {
+        return high;
     }
-
-    if (a == b) {
-        return flpt_double(a);
-    }
-    return 0;
-}
-
-
-//! Knowing the high and low numbers, add them together and return the result
-static inline flpt_t flpt_add_raw(const flpt_t high, const flpt_t low) {
-    uint32_t shift = ((high & EXPONENT_MASK) - (low & EXPONENT_MASK)) >> FLPT_MANTISSE;
+    uint32_t shift = (mag_h >> FLPT_MANTISSE) - (mag_l >> FLPT_MANTISSE);
     if (shift > FLPT_MANTISSE) {
-        return high; // low number is too small to affect the result
+        return high;
     }
-    flpt_t result = (high & SIGN_MASK) | (high & EXPONENT_MASK);
-    // Handles mantiss shift & addition with hidden bit
-    uint32_t result_mant = ((low & MANTISSE_MASK) | MANTISSE_HIDDEN_BIT_MASK) >> shift;
-    result_mant += ((high & MANTISSE_MASK) | MANTISSE_HIDDEN_BIT_MASK);
-    // Handle overflow of mantisse
-    if (result_mant & MANTISSE_OVERFLOW_MASK) {
-        result_mant >>= 1; // shift mantisse down
-        result += (MANTISSE_HIDDEN_BIT_MASK); // add 1 to the exponent 
+    uint32_t mant_h = (high & MANTISSE_MASK) | MANTISSE_HIDDEN_BIT_MASK;
+    uint32_t mant_l = ((low & MANTISSE_MASK) | MANTISSE_HIDDEN_BIT_MASK) >> shift;
+    flpt_t result = high & NEG_MANTISSE_MASK;   // sign + exponent
+    if ((high ^ low) & SIGN_MASK) { // different signs
+        uint32_t result_mant = mant_h - mant_l;
+        if (result_mant == 0) return 0;
+        uint32_t k = FLPT_MANTISSE + 1 - fl1(result_mant);
+        result -= k << FLPT_MANTISSE;
+        result_mant <<= k;
+        return result + result_mant - MANTISSE_HIDDEN_BIT_MASK;
+    } else {// same sign
+        uint32_t result_mant = mant_h + mant_l;
+        uint32_t n = result_mant >> (FLPT_MANTISSE + 1);
+        result_mant >>= n;
+        return result + (n << FLPT_MANTISSE) + result_mant - MANTISSE_HIDDEN_BIT_MASK;
     }
-    result |= (result_mant - MANTISSE_HIDDEN_BIT_MASK); // Remove hidden bit and add to result
-    return result;
 }
 
-//! Knowing the high and low numbers, subtract the low from the high and return the result
-static inline flpt_t flpt_sub_raw(const flpt_t high, const flpt_t low) {
-    uint32_t shift = ((high & EXPONENT_MASK) - (low & EXPONENT_MASK)) >> FLPT_MANTISSE;
-        if (shift > FLPT_MANTISSE) {
-        return high; // low number is too small to affect the result
+//! \brief Subtract two flpt point numbers
+// Equivalent to flpt_add(a, b^sign)
+static inline flpt_t flpt_sub(const flpt_t a, const flpt_t b) {
+    uint32_t mag_a = a & NEG_SIGN_MASK; 
+    uint32_t mag_b = b & NEG_SIGN_MASK;
+    int swap   = mag_a < mag_b;
+    flpt_t high  = swap ? b : a;
+    flpt_t low  = swap ? a : b;
+    uint32_t mag_h = high & NEG_SIGN_MASK;  // recompute magnitudes instead of swapping
+    uint32_t mag_l = low & NEG_SIGN_MASK;
+    if (mag_l == 0) {
+        return high;
     }
-
-    flpt_t result = (high & SIGN_MASK) | (high & EXPONENT_MASK);
-    // Shift mantisse of low number & and high mantisse with hidden bit
-    uint32_t result_mant = ((low & MANTISSE_MASK) | MANTISSE_HIDDEN_BIT_MASK) >> shift;
-    uint32_t high_mant = (high & MANTISSE_MASK) | MANTISSE_HIDDEN_BIT_MASK;
-    result_mant = (high_mant - result_mant); // Remove hidden bit
-    // Handle underflow of mantisse
-    result -= (FLPT_MANTISSE + 1 - fl1(result_mant)) << (FLPT_MANTISSE) ; // Adjust exponent
-    result_mant <<= (FLPT_MANTISSE  + 1- fl1(result_mant)); // Shift mantisse down to remove leading zeros
-    // Remove hidden bit and add to result
-    result |= (result_mant - MANTISSE_HIDDEN_BIT_MASK); 
-    return result;
+    uint32_t shift = (mag_h >> FLPT_MANTISSE) - (mag_l >> FLPT_MANTISSE);
+    if (shift > FLPT_MANTISSE) {
+        return high;
+    }
+    uint32_t mant_h = (high & MANTISSE_MASK) | MANTISSE_HIDDEN_BIT_MASK;
+    uint32_t mant_l = ((low & MANTISSE_MASK) | MANTISSE_HIDDEN_BIT_MASK) >> shift;
+    flpt_t result = high & NEG_MANTISSE_MASK;   // sign + exponent
+    if ((high ^ low) & SIGN_MASK) { // different signs
+        uint32_t result_mant = mant_h + mant_l;
+        uint32_t n = result_mant >> (FLPT_MANTISSE + 1);
+        result_mant >>= n;
+        return result + (n << FLPT_MANTISSE) + result_mant - MANTISSE_HIDDEN_BIT_MASK;
+    } else {// same sign
+        uint32_t result_mant = mant_h - mant_l;
+        if (result_mant == 0) return 0;
+        uint32_t k = FLPT_MANTISSE + 1 - fl1(result_mant);
+        result -= k << FLPT_MANTISSE;
+        result_mant <<= k;
+        return result + result_mant - MANTISSE_HIDDEN_BIT_MASK;
+    }
 }
 
 //! \brief Multiply two flpt point numbers

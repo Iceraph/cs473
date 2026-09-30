@@ -6,6 +6,12 @@
 #include <stdio.h>
 #include "flpt.h"
 #include "perf.h"
+#include "spr.h"
+void bus_error_handler() {
+    printf("bus error: pc=%08x addr=%08x\n", SPR_READ(0x20), SPR_READ(0x30));
+}
+
+static rgb565 frameBuffer[512 * 512] __attribute__((aligned(32)));   // global, outside main
 
 // Constants describing the output device
 const int SCREEN_WIDTH = 512;   //!< screen width
@@ -20,7 +26,7 @@ const uint16_t N_MAX = 64;    //!< maximum number of iterations
 int main() {
    volatile unsigned int *vga = (unsigned int *) 0x50000020;
    volatile unsigned int reg, hi;
-   rgb565 frameBuffer[SCREEN_WIDTH*SCREEN_HEIGHT];
+   //rgb565 frameBuffer[SCREEN_WIDTH*SCREEN_HEIGHT];
    //float delta = FRAC_WIDTH / SCREEN_WIDTH;
    flpt_t delta = 0x25000000;
    printf("delta = %x\n", delta);
