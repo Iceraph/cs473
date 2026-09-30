@@ -34,12 +34,6 @@ static inline flpt_t flpt_double (const flpt_t a) {
     return (a + (MANTISSE_HIDDEN_BIT_MASK)); // exp + 1);
 }
 
-static inline flpt_t flpt_sub (const flpt_t a, const flpt_t b) {
-    // Subtracting b is the same as adding -b
-    // Could be optimized to avoid the xor operation, but this is more readable
-    return flpt_add(a, (b ^SIGN_MASK));
-}
-
 //! \brief Add two flpt point numbers
 //! Handles the different cases and redirects to the appropriate function for addition
 static inline flpt_t flpt_add(const flpt_t a, const flpt_t b) {

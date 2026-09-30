@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-typedef int32_t q6_26;  //!< 6.26 fixed point type
-typedef int64_t q12_52; //!< 12.52 fixed point type 
+typedef int32_t q6_26;   //!< 6.26 fixed point type
+typedef int64_t q12_52;  //!< 12.52 fixed point type 
 
 //! Colour type (5-bit red, 6-bit green, 5-bit blue)
 typedef uint16_t rgb565;
