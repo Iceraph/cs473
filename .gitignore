@@ -2,3 +2,9 @@
 or1kToolchain/
 
 gcc/
+
+*.o
+*.d
+*.elf
+*.mem
+*.cmem
