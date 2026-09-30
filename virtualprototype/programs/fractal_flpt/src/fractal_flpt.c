@@ -17,12 +17,12 @@ uint16_t calc_mandelbrot_point_soft(flpt_t cx, flpt_t cy, uint16_t n_max) {
   do {
     xx = flpt_square(x);
     yy = flpt_square(y);
-    two_xy = flpt_double(flpt_mul(x, y)); // 2*x*y
+    two_xy = flpt_mul2(x, y); // 2*x*y
 
     x = flpt_add(flpt_sub(xx, yy), cx); // x = xx - yy + cx
     y = flpt_add(two_xy, cy); // y = 2xy + cy
     ++n;
-  } while ((flpt_add(xx, yy) < FOUR) && (n < n_max));
+  } while ((flpt_add_pos(xx, yy) < FOUR) && (n < n_max));
   return n;
 }
 

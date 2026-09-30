@@ -7,6 +7,7 @@
 #include "flpt.h"
 #include "perf.h"
 #include "spr.h"
+
 void bus_error_handler() {
     printf("bus error: pc=%08x addr=%08x\n", SPR_READ(0x20), SPR_READ(0x30));
 }
@@ -32,14 +33,7 @@ int main() {
    printf("delta = %x\n", delta);
    int i;
    vga_clear();
-   perf_init();
    printf("Starting drawing a fractal\n");
-   // Perf settings
-   perf_set_mask(PERF_COUNTER_0, PERF_EXECUTED_INSTRUCTIONS_MASK);
-   perf_set_mask(PERF_COUNTER_1, PERF_STALL_CYCLES_MASK);
-   perf_set_mask(PERF_COUNTER_2, PERF_BRANCH_PENALTY_MASK);
-   perf_set_mask(PERF_COUNTER_3, PERF_DCACHE_MISS_MASK);
-   perf_start();
 #ifdef __OR1300__   
    /* enable the caches */
    icache_write_cfg( CACHE_DIRECT_MAPPED | CACHE_SIZE_8K | CACHE_REPLACE_FIFO );
@@ -56,10 +50,19 @@ int main() {
    for (i = 0 ; i < SCREEN_WIDTH*SCREEN_HEIGHT ; i++) frameBuffer[i]=0;
    printf("Cleared framebuffer\n");
    /* Draw the fractal */
+   #ifdef PERF_COUNTERS
+   perf_init();
+   perf_set_mask(PERF_COUNTER_0, PERF_EXECUTED_INSTRUCTIONS_MASK);
+   perf_set_mask(PERF_COUNTER_1, PERF_STALL_CYCLES_MASK);
+   perf_set_mask(PERF_COUNTER_2, PERF_BRANCH_PENALTY_MASK);
+   perf_set_mask(PERF_COUNTER_3, PERF_DCACHE_MISS_MASK);
+   perf_start();
+#endif // PERF_COUNTERS
    draw_fractal(frameBuffer,SCREEN_WIDTH,SCREEN_HEIGHT,&calc_mandelbrot_point_soft, &iter_to_colour,CX_0,CY_0,delta,N_MAX);
 #ifdef __OR1300__
    dcache_flush();
 #endif
+#ifdef PERF_COUNTERS
    perf_stop();
    perf_print_cycles(PERF_COUNTER_RUNTIME, "Fractal"); 
    perf_print_time(PERF_COUNTER_RUNTIME, "Fractal");
@@ -67,5 +70,6 @@ int main() {
    perf_print_cycles(PERF_COUNTER_1, "Stall cycles");
    perf_print_cycles(PERF_COUNTER_2, "Branch penalty");
    perf_print_cycles(PERF_COUNTER_3, "D-cache misses");
+#endif // PERF_COUNTERS
    printf("Done\n");
 }
