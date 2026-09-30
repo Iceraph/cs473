@@ -1,9 +1,9 @@
-#ifndef FLPT_H
-#define FLPT_H
+#ifndef MYFLPT_H
+#define MYFLPT_H
 
 #include <stdint.h>
 
-#define FLPT_EXPONENT 6 // Don't forget to change the BIAS value if you change the exponent size
+#define FLPT_EXPONENT 5
 #define FLPT_SIGN 1
 #define FLPT_MANTISSE (32 - FLPT_EXPONENT - FLPT_SIGN)
 
@@ -23,4 +23,4 @@ static inline flpt_t flpt_add_pos(const flpt_t a, const flpt_t b);
 
 static inline uint32_t fl1(uint32_t x);
 
-#endif // FLPT_H
+#endif // MYFLPT_H

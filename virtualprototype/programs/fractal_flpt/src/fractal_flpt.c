@@ -1,28 +1,25 @@
 #include "fractal_flpt.h"
 #include <swap.h>
-#include <stdio.h>
-
-#define FOUR ((flpt_t)0x38000000)
 
 //! \brief  Mandelbrot fractal point calculation function
 //! \param  cx    x-coordinate
 //! \param  cy    y-coordinate
 //! \param  n_max maximum number of iterations
 //! \return       number of performed iterations at coordinate (cx, cy)
-uint16_t calc_mandelbrot_point_soft(flpt_t cx, flpt_t cy, uint16_t n_max) {
-  flpt_t x = cx;
-  flpt_t y = cy;
+uint16_t calc_mandelbrot_point_soft(float cx, float cy, uint16_t n_max) {
+  float x = cx;
+  float y = cy;
   uint16_t n = 0;
-  flpt_t xx, yy, two_xy;
+  float xx, yy, two_xy;
   do {
-    xx = flpt_square(x);
-    yy = flpt_square(y);
-    two_xy = flpt_mul2(x, y); // 2*x*y
+    xx = x * x;
+    yy = y * y;
+    two_xy = 2 * x * y;
 
-    x = flpt_add(flpt_sub(xx, yy), cx); // x = xx - yy + cx
-    y = flpt_add(two_xy, cy); // y = 2xy + cy
+    x = xx - yy + cx;
+    y = two_xy + cy;
     ++n;
-  } while ((flpt_add_pos(xx, yy) < FOUR) && (n < n_max));
+  } while (((xx + yy) < 4) && (n < n_max));
   return n;
 }
 
@@ -103,17 +100,17 @@ rgb565 iter_to_colour1(uint16_t iter, uint16_t n_max) {
 //! \param  n_max  maximum number of iterations
 void draw_fractal(rgb565 *fbuf, int width, int height,
                   calc_frac_point_p cfp_p, iter_to_colour_p i2c_p,
-                  flpt_t cx_0, flpt_t cy_0, flpt_t delta, uint16_t n_max) {
+                  float cx_0, float cy_0, float delta, uint16_t n_max) {
   rgb565 *pixel = fbuf;
-  flpt_t cy = cy_0;
+  float cy = cy_0;
   for (int k = 0; k < height; ++k) {
-    flpt_t cx = cx_0;
+    float cx = cx_0;
     for(int i = 0; i < width; ++i) {
       uint16_t n_iter = (*cfp_p)(cx, cy, n_max);
       rgb565 colour = (*i2c_p)(n_iter, n_max);
       *(pixel++) = colour;
-      cx = flpt_add(cx, delta);
+      cx += delta;
     }
-    cy = flpt_add(cy, delta);
+    cy += delta;
   }
 }
