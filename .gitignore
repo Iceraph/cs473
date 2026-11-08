@@ -1,6 +1,9 @@
 
 or1kToolchain/
 
+Claude outputs/
+
+
 gcc/
 
 *.o
@@ -8,3 +11,6 @@ gcc/
 *.elf
 *.mem
 *.cmem
+*.DS_Store
+
+build-release-or1300/
