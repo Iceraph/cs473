@@ -5,6 +5,8 @@
 #include <string.h>
 
 #define MEM_SIZE 1024
+#define NUMBER_ITEMS 16
+static char data_storage[NUMBER_ITEMS][ITEM_DATALEN];
 
 static struct {
     char data[MEM_SIZE];
@@ -62,6 +64,8 @@ item_t* items_find(item_t* items, size_t log2n, unsigned id) {
 void item_init(item_t* item, uint32_t id, const char* data) {
     // YOU CAN MODIFY THIS.
     item->id = id;
+
+    item->data = data_storage[id]; 
 
     if (data != NULL)
         memcpy(item->data, data, ITEM_DATALEN);
