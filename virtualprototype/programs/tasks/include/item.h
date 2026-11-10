@@ -21,7 +21,6 @@ struct item_t {
 
     /** @brief Item data. */
     char *data;
-    //char data[ITEM_DATALEN];
 };
 
 /**
