@@ -19,14 +19,14 @@ struct node_t {
     /** @brief Node ID. */
     unsigned id;
 
-    /** @brief Node data. */
-    char data[NODE_DATALEN];
-
     /** @brief The next node. */
     node_t* next;
 
     /** @brief The previous node. */
     node_t* prev;
+
+    /** @brief Node data. */
+    char data[NODE_DATALEN];
 };
 
 /**
