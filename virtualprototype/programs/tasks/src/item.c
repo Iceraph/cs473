@@ -5,6 +5,7 @@
 #include <string.h>
 
 #define MEM_SIZE 1024
+//Add for task 2
 #define NUMBER_ITEMS 16
 static char data_storage[NUMBER_ITEMS][ITEM_DATALEN];
 
@@ -65,6 +66,7 @@ void item_init(item_t* item, uint32_t id, const char* data) {
     // YOU CAN MODIFY THIS.
     item->id = id;
 
+    //Add for task 2
     item->data = data_storage[id]; 
 
     if (data != NULL)
